@@ -1,24 +1,42 @@
 package jm.security.example.dao;
 
-import jm.security.example.model.Role;
 import jm.security.example.model.User;
 import org.springframework.stereotype.Repository;
 
-import java.util.Collections;
-import java.util.Map;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.util.List;
 
 @Repository
 public class UserDaoImpl implements UserDao {
-    private final Map<String, User> userMap = Collections.singletonMap("test",
-            new User(1L, "test", "test", Collections.singleton(new Role(1L, "ROLE_USER")))); // name - уникальное значение, выступает в качестве ключа Map
+
+    @PersistenceContext
+    EntityManager entityManager;
 
     @Override
     public User getUserByName(String name) {
-        if (!userMap.containsKey(name)) {
-            return null;
-        }
+        return entityManager.createQuery("from User uzer where uzer.name =: name", User.class)
+                .setParameter("name", name).getSingleResult();
+    }
 
-        return userMap.get(name);
+    @Override
+    public List<User> getUsers() {
+        return entityManager.createQuery("from User", User.class).getResultList();
+    }
+
+    @Override
+    public void createUser(User user) {
+        entityManager.merge(user);
+    }
+
+    @Override
+    public User findUserById(Long id) {
+        return entityManager.find(User.class, id);
+    }
+
+    @Override
+    public void delete(Long id) {
+        entityManager.remove(findUserById(id));
     }
 }
 
